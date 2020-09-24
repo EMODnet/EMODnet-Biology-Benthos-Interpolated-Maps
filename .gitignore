@@ -1,0 +1,36 @@
+# Product netCDF
+product/*.nc
+
+.ipynb_checkpoints/
+
+# History files
+.Rhistory
+.Rapp.history
+
+# Session Data files
+.RData
+
+# RStudio files
+.Rproj.user/
+
+# Rendered reports
+product/*.html
+analysis/*.docx
+analysis/*.pdf
+docs/*.html
+docs/*.docx
+docs/*.pdf
+
+# output files
+output/
+
+# knitr and R markdown default cache directories
+/analysis/cache/
+/analysis/figures/
+
+# Temporary files created by R markdown
+*.utf8.md
+*.knit.md
+
+# RStudio
+.Rproj.user
