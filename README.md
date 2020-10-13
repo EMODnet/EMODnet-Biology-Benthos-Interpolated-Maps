@@ -25,6 +25,8 @@ EMODnet-Biology-Benthos-Interpolated-Maps/
 
 ## Data
 
+All the data records are stored in the file `specs4Diva.csv`.       
+
 The data is structured like this:
 ```bash
 eventNummer,eventDate,decimalLongitude,decimalLatitude,Abra_alba,Amphiura_filiformis,Diplocirrus_glaucus,Amphiura_chiajei,Abludomelita_obtusata,Bicellariella_ciliata,Megaluropus_agilis,Sigalion_mathildae,Callianassa_subterranea,Acrocnida_brachiata,Littorina_littorea,Aequipecten_opercularis,Bathyporeia_tenuipes,Lumbrineriopsis_paradoxa,Spio_armata,Schizomavella_(Schizomavella)_auriculata,Amphiura_(Ophiopeltis)_securigera,Diplocirrus_stopbowitzi
@@ -36,7 +38,8 @@ eventNummer,eventDate,decimalLongitude,decimalLatitude,Abra_alba,Amphiura_filifo
 ```
 so we have:
 * the event number,
-* the time and the coordinates,
+* the time of the observation,
+* the coordinates and
 * a `TRUE` or `FALSE` value for different species.
 
 
