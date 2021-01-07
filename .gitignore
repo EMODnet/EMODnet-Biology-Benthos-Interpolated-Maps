@@ -1,5 +1,6 @@
 # Product netCDF
 product/*.nc
+product/1-UniformL/*.nc
 
 .ipynb_checkpoints/
 
