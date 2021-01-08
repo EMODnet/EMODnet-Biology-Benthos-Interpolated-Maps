@@ -16,8 +16,6 @@ The dataset to be processed contained only a binary information: presence or abs
 
 ![presense/absence](product/figures/1-UniformL/data/Aequipecten_opercularis_data.jpg)
 
-* [Heatmap](analysis/interp_presence_absence_benthos.ipynb):
-
 
 ## Directory structure
 
@@ -60,9 +58,23 @@ so we have:
 The information is read by the function
 `read_coords_species` defined in the script  [`BenthosInterp.jl`](scripts/BenthosInterp.jl).
 
-
-
 ## Analysis
+
+This directory contains the notebooks for the preparation and analysis of the data, as well as the generation of the figures.
+
+* `interp_presence_absence_benthos.ipynb`:
+1. prepare the domain and the bathymetry,
+2. read the coordinates of presence and absence for each species,
+3. compute the probability map and the associated error field and
+4. write the results in a netCDF file (one per species), in the directory `product/netCDF`
+
+The analysis are performed:
+1. Using a uniform correlation length all over the domain (0.1°)
+2. Using a spatially variable correlation length, derives from the substrates.
+
+* `plot_results_map.ipynb`: notebook in Python to create the figures using the _ETRS89 Lambert Azimuthal Equal Area_ coordinate reference system of 2001 (EPGS 3035).     
+The figures are stored in `product/figures`.
+
 
 
 ## Citation
