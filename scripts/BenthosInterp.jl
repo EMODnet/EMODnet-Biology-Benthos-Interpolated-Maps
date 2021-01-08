@@ -160,46 +160,47 @@ function plot_error(longrid::StepRangeLen, latgrid::StepRangeLen,
 end
 
 """
-    make_plot_presence_absence(lon_pre, lat_pre, lon_abs, lat_abs, figname)
+    make_plot_presence_absence(lon_pre, lat_pre, lon_abs, lat_abs, species, figname)
 
 Plot the locations of absence and presence in 2 subplots and save it as `figname`.
 
 ## Example
 ```julia-repl
-julia> make_plot_presence_absence(lon_pre, lat_pre, lon_abs, lat_abs, "data_locations.png")
+julia> make_plot_presence_absence(lon_pre, lat_pre, lon_abs, lat_abs,
+"Abra_alba_data", "data_locations.jpg")
 ```
 """
 function make_plot_presence_absence(lon_pre::Vector, lat_pre::Vector,
 	                                lon_abs::Vector, lat_abs::Vector,
-									figname::String="", species::String="",
+									species::String=""; figname::String="",
 									domain=[-16., 9., 45., 66.], dlon=4., dlat=4.,
 									usecartopy=false)
 
     fig = PyPlot.figure(figsize=(8, 8))
 	if usecartopy
-		ax = PyPlot.subplot(211, projection=myproj)
+		ax = PyPlot.subplot(121, projection=myproj)
 	else
-		ax = PyPlot.subplot(211)
+		ax = PyPlot.subplot(121)
 	end
 
     ax.plot(lon_pre, lat_pre, "ko", markersize=.2)
     title("Presence of $(species)")
 
 	if usecartopy
-		decorate_map(ax, true; domain=domain, dlon=dlon, dlat=dlat)
+		decorate_map_domain(ax, true; domain=domain, dlon=dlon, dlat=dlat)
 	end
 
 	if usecartopy
-		ax = PyPlot.subplot(212, projection=myproj)
+		ax = PyPlot.subplot(122, projection=myproj)
 	else
-		ax = PyPlot.subplot(212)
+		ax = PyPlot.subplot(122)
 	end
 
     ax.plot(lon_abs, lat_abs, "ko", markersize=.2)
     title("Absence")
 
 	if usecartopy
-		decorate_map(ax, true; domain=domain, dlon=dlon, dlat=dlat)
+		decorate_map_domain(ax, true; domain=domain, dlon=dlon, dlat=dlat)
 	end
 
     if length(figname) > 0
@@ -215,7 +216,7 @@ if usecartopy
     gridliner = pyimport("cartopy.mpl.gridliner")
     cfeature = pyimport("cartopy.feature")
     mticker = pyimport("matplotlib.ticker")
-    myproj = ccrs.epsg(3035)
+    myproj = ccrs.PlateCarree()
     coast = cfeature.GSHHSFeature(scale="high");
     mpl = pyimport("matplotlib");
     cartopyticker = pyimport("cartopy.mpl.ticker")
@@ -311,7 +312,7 @@ function create_nc_results(filename::String, lons, lats, field,
 		nclat.attrib["valid_max"] = 90.0 ;
 
         # Global attributes
-		ds.attrib["title"] = "$(long_name) based on abundance of $(speciesname)"
+		ds.attrib["title"] = "$(long_name) based on presence/absence of $(speciesname)"
 		ds.attrib["institution"] = "GHER - University of Liege, Deltares, VLIZ"
 		ds.attrib["source"] = "spatial interpolation of presence/absence data"
         ds.attrib["project"] = "EMODnet Biology Phase III"
