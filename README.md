@@ -68,17 +68,29 @@ This directory contains the notebooks for the preparation and analysis of the da
 3. compute the probability map and the associated error field and
 4. write the results in a netCDF file (one per species), in the directory `product/netCDF`
 
-The analysis are performed:
-1. Using a uniform correlation length all over the domain (0.1°)
-2. Using a spatially variable correlation length, derives from the substrates.
-
-* `plot_results_map.ipynb`: notebook in Python to create the figures using the _ETRS89 Lambert Azimuthal Equal Area_ coordinate reference system of 2001 (EPGS 3035).     
+* `plot_results_map.ipynb`: notebook in Python to create the figures using the _ETRS89 Lambert Azimuthal Equal Area_ coordinate reference system of 2001 (`EPGS 3035`).     
 The figures are stored in `product/figures`.
 
 
+### Products
+
+Two types of analysis are performed:
+1. Using a uniform correlation length all over the domain (0.1°) (directory `1-UniformL`)
+2. Using a spatially variable correlation length, derives from the substrates (directory
+	`2-VariableL`).
+
+![variableL](product/figures/variableL.jpg)
+
+### Code
+
+The code, written in Julia, is distributed through GitHub:
+https://github.com/EMODnet/EMODnet-Biology-Benthos-Interpolated-Maps
+The `analysis` directory stores different jupyter-notebooks describing the different analysis steps.
 
 ## Citation
 
 Please cite this product as:
 *A. Barth, P. Hermann and C. Troupin (2020). Probability maps
-for different benthos species in the North Sea.*
+for different benthos species in the North Sea. Integrated data products created under the European Marine Observation Data Network (EMODnet) Biology project (EASME/EMFF/2017/1.3.1.2/02/SI2.789013), funded by the European Union under Regulation (EU) No 508/2014 of the European Parliament and of the Council of 15 May 2014 on the European Maritime and Fisheries Fund.*
+
+The code is free software; you can redistribute it and/or modify it under the terms of the GNU General Public License as published by the Free Software Foundation; either version 2 of the License, or (at your option) any later version.
