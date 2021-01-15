@@ -1,5 +1,9 @@
 usecartopy = true
 
+using GridInterpolations
+using Interpolations
+using Missings
+
 """
     read_coords_species(datafile, species)
 
@@ -135,7 +139,7 @@ julia> plot_error(longrid, latgrid, cmpe,
 ```
 """
 function plot_error(longrid::StepRangeLen, latgrid::StepRangeLen,
-    error::Array, titletext::String="", figname::String="", usecartopy=false)
+    error::Array, titletext::String=""; figname::String="", usecartopy=false)
 
     llon, llat = ndgrid(longrid, latgrid)
     fig = PyPlot.figure(figsize=(12,8))
@@ -150,6 +154,7 @@ function plot_error(longrid::StepRangeLen, latgrid::StepRangeLen,
     if usecartopy
         decorate_map_domain(ax)
     end
+
     title(titletext)
     if length(figname) > 0
         PyPlot.savefig(figname, dpi=300, bbox_inches="tight")
@@ -372,4 +377,59 @@ function write_nc_error(filename::String, error::Array  ;
 		ncerror.attrib["grid_mapping"] = "crs" ;
         ncerror[:] = error
     end
+end
+
+"""
+	read_substrate(datafile)
+
+Read the coordinates and the correlation length (2D field) from the file `datafile`.
+
+## Example
+```julia-repl
+julia> lon, lat, g = read_substrate("substrate_gini_impurity.nc")
+```
+"""
+function read_substrate(datafile::String)
+    NCDatasets.Dataset(datafile, "r") do nc
+        lonL = nc["lon"][:]
+        latL = nc["lat"][:]
+        gimpurity = nc["substrate_gini_impurity"][:]
+
+        return lonL::Array{Float64,1}, latL::Array{Float64,1}, gimpurity::Array{Float64,2}
+    end
+end
+
+
+"""
+	interp_horiz(londata, latdata, data, longrid, latgrid)
+
+Perform a bilinear interpolation of a 2D field defined by the coordinates
+`(londata, latdata)` and the values `data`, onto the grid defined by the
+vectors `longrid` and `latgrid`.
+The interpolation is only performed over the area where data are available,
+i.e., no extrapolation is performed.
+
+## Example
+```julia-repl
+julia> fieldinterp = interp_horiz(londata, latdata, data, longrid, latgrid)
+```
+"""
+function interp_horiz(londata, latdata, data, longrid, latgrid)
+
+    # Find the coordinates where the interpolation can be performed
+    # (no extrapolation)
+    goodlon = (longrid .<= londata[end]) .& (longrid .>= londata[1]);
+    goodlat = (latgrid .<= latdata[end]) .& (latgrid .>= latdata[1]);
+
+    # Create the interpolator
+    itp = Interpolations.interpolate((londata, latdata), data, Gridded(Linear()))
+    #fieldinterpolated = itp(longrid, latgrid);
+
+    # Perform the interpolation
+    # (only within the domain of interest)
+    lon_interp = longrid[goodlon]
+    lat_interp = latgrid[goodlat]
+    field_interpolated = itp(lon_interp, lat_interp);
+
+    return lon_interp, lat_interp, field_interpolated, findall(goodlon), findall(goodlat)
 end
