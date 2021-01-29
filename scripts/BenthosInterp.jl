@@ -15,7 +15,7 @@ Read the coordinates for presence and abscence events stored in the file
 julia> lon_pre, lat_pre, lon_abs, lat_abs = read_data_phyto("specs4Diva.csv")
 ```
 """
-function read_coords_species(datafile::String, species::Union{String,SubString{String}})
+function read_coords_species(datafile::String, species::Union{String,SubString{String}}, occurtype=1)
     data = readdlm(datafile, ',');
     colnames = data[1,:]
     dates = data[2:end,2]
@@ -24,8 +24,15 @@ function read_coords_species(datafile::String, species::Union{String,SubString{S
     col_index = findall(colnames .== species)[1]
     @info("Column index for $(species): $(col_index)");
     occur_species = data[2:end,col_index]
-    occur_pre = findall(occur_species .== "TRUE")
-    occur_abs = findall(occur_species .== "FALSE")
+
+	if occurtype == 1
+		occur_pre = findall(occur_species .== "TRUE")
+    	occur_abs = findall(occur_species .== "FALSE")
+	elseif occurtype == 2
+		occur_pre = findall(occur_species .== "1")
+    	occur_abs = findall(occur_species .== "0")
+	end
+
     lon_presence = lon[occur_pre]
     lat_presence = lat[occur_pre]
     lon_absence = lon[occur_abs]
@@ -64,6 +71,25 @@ julia> specnames = get_species_list("specs4Diva.csv")
 function get_species_list(datafile::String)::Array
     specnames = split(readline(datafile), ",")[5:end]
     return specnames
+end
+
+"""
+    read_specnames(datafile)
+
+Return the a dictionary where keys are the and the values the
+
+## Examples
+```julia-repl
+julia> spec_dict = read_specnames("spe.csv")
+```
+"""
+function read_specnames(datafile::String)::Dict
+    d = Dict([])
+    f = readline(datafile)
+    for lines in readlines(datafile)
+        d[split(lines, ",")[1]] = split(lines, ",")[2]
+    end
+    return d
 end
 
 """
@@ -433,3 +459,110 @@ function interp_horiz(londata, latdata, data, longrid, latgrid)
 
     return lon_interp, lat_interp, field_interpolated, findall(goodlon), findall(goodlat)
 end
+
+
+"""
+    create_nc_results_merged(filename, lons, lats)
+
+Create a netCDF file `filename` with the coordinates `lons`, `lats` and the
+heatmap `field`.
+
+## Examples
+```julia-repl
+julia> create_nc_results("Bacteriastrum_interp.nc", lons, lats, field,
+    "Bacteriastrum")
+```
+"""
+function create_nc_results_merged(filename::String, lons, lats, field,
+                           valex=-999.9,
+                           varname = "heatmap",
+                           long_name = "Heatmap",
+						   domain = [-180., 180., -90., 90.]
+                           )
+    Dataset(filename, "c") do ds
+
+        # Dimensions
+        ds.dim["lon"] = length(lons)
+        ds.dim["lat"] = length(lats)
+        #ds.dim["time"] = Inf # unlimited dimension
+
+        # Declare variables
+		nccrs = defVar(ds, "crs", Int64, ())
+    	nccrs.attrib["grid_mapping_name"] = "latitude_longitude"
+    	nccrs.attrib["semi_major_axis"] = 6371000.0 ;
+    	nccrs.attrib["inverse_flattening"] = 0 ;
+
+        ncfield = defVar(ds, varname, Float64, ("lon", "lat"))
+        ncfield.attrib["missing_value"] = Float64(valex)
+        ncfield.attrib["_FillValue"] = Float64(valex)
+		ncfield.attrib["units"] = "1"
+        ncfield.attrib["long_name"] = long_name
+		ncfield.attrib["coordinates"] = "lat lon"
+		ncfield.attrib["grid_mapping"] = "crs" ;
+
+		# No time variable needed here
+        """
+        nctime = defVar(ds,"time", Float32, ("time",))
+        nctime.attrib["missing_value"] = Float32(valex)
+        nctime.attrib["units"] = "seconds since 1981-01-01 00:00:00"
+        nctime.attrib["long_name"] = "time"
+        """
+
+        nclon = defVar(ds,"lon", Float32, ("lon",))
+        # nclon.attrib["missing_value"] = Float32(valex)
+        nclon.attrib["_FillValue"] = Float32(valex)
+        nclon.attrib["units"] = "degrees_east"
+        nclon.attrib["long_name"] = "Longitude"
+		nclon.attrib["standard_name"] = "longitude"
+		nclon.attrib["axis"] = "X"
+		nclon.attrib["reference_datum"] = "geographical coordinates, WGS84 projection"
+		nclon.attrib["valid_min"] = -180.0 ;
+		nclon.attrib["valid_max"] = 180.0 ;
+
+        nclat = defVar(ds,"lat", Float32, ("lat",))
+        # nclat.attrib["missing_value"] = Float32(valex)
+        nclat.attrib["_FillValue"] = Float32(valex)
+        nclat.attrib["units"] = "degrees_north"
+		nclat.attrib["long_name"] = "Latitude"
+		nclat.attrib["standard_name"] = "latitude"
+		nclat.attrib["axis"] = "Y"
+		nclat.attrib["reference_datum"] = "geographical coordinates, WGS84 projection"
+		nclat.attrib["valid_min"] = -90.0 ;
+		nclat.attrib["valid_max"] = 90.0 ;
+
+        # Global attributes
+		ds.attrib["title"] = "$(long_name) based on presence/absence of $(speciesname)"
+		ds.attrib["institution"] = "GHER - University of Liege, Deltares, VLIZ"
+		ds.attrib["source"] = "spatial interpolation of presence/absence data"
+        ds.attrib["project"] = "EMODnet Biology Phase III"
+        ds.attrib["comment"] = "Original data prepared by Deltares"
+        ds.attrib["data_authors"] = "Peter Herman (Peter.Herman@deltares.nl)"
+        ds.attrib["processing_authors"] = "C. Troupin (ctroupin@uliege), A. Barth (a.barth@uliege.be)"
+		ds.attrib["publisher_name"] = "VLIZ"
+		ds.attrib["publisher_url"] = "http://www.vliz.be/"
+		ds.attrib["publisher_email"] = "info@vliz.be"
+        ds.attrib["created"] = Dates.format(Dates.now(), "yyyy-mm-dd HH:MM:SS")
+		ds.attrib["geospatial_lat_min"] = domain[3]
+		ds.attrib["geospatial_lat_max"] = domain[4]
+		ds.attrib["geospatial_lon_min"] = domain[1]
+		ds.attrib["geospatial_lon_max"] = domain[2]
+		ds.attrib["geospatial_lat_units"] = "degrees_north"
+		ds.attrib["geospatial_lon_units"] = "degrees_east"
+		ds.attrib["license"] = "GNU General Public License v2.0"
+		ds.attrib["citation"] = "A. Barth, P. Hermann and C. Troupin (2020). Probability maps for different benthos species in the North Sea."
+		ds.attrib["acknowledgement"] = "European Marine Observation Data Network (EMODnet) Biology project (EASME/EMFF/2017/1.3.1.2/02/SI2.789013), funded by the European Union under Regulation (EU) No 508/2014 of the European Parliament and of the Council of 15 May 2014 on the European Maritime and Fisheries Fund"
+		ds.attrib["tool"] = "DIVAnd"
+		ds.attrib["tool_version"] = "v2.6.5"
+		ds.attrib["tool_doi"] = "10.5281/zenodo.4306494"
+		ds.attrib["language"] = "Julia 1.5.3"
+		ds.attrib["Conventions"] = "CF-1.7"
+		ds.attrib["netcdf_version"] = "4"
+
+        # Define variables
+        ncfield[:] = field
+
+        nclon[:] = lons
+        nclat[:] = lats;
+
+    end
+end;
