@@ -1,14 +1,14 @@
 # EMODnet-Biology-Benthos-Interpolated-Maps
 
-`DIVA` (Data Interpolating Variational Analysis) and `DIVAnd`ß (DIVA in n dimensions) are software tools primarily designed to generate gridded maps of continuous variables such as sea water temperature, salinity or oxygen concentration. The main advantages over other interpolation or analysis method are:
+`DIVA` (Data Interpolating Variational Analysis) and `DIVAnd` (DIVA in __n__ dimensions) are software tools primarily designed to generate gridded maps of continuous variables such as sea water temperature, salinity or oxygen concentration. The main advantages over other interpolation or analysis method are:
 * coastlines and physical boundaries are taken into account by the method.
 * large datasets (million of data points) can be ingested and processed by the tool.
 
 DIVAnd is a multi-dimensional generalization ([Barth et al., 2014](https://dx.doi.org/10.5194/gmd-7-225-2014)), written in the [Julia language](https://julialang.org/), with a new mathematical formulation with respect to the previous DIVA code.
 
 This directory provides the codes and tools to
-- process the presence/absence data relative to different benthos species, and
-- generat gridded field using `DIVAnd`.
+- process the presence/absence data relative to different _benthos_ species, and
+- generate gridded field using `DIVAnd`.
 
 ## DIVAnd for presence/absence data
 
@@ -38,7 +38,10 @@ EMODnet-Biology-Benthos-Interpolated-Maps/
 
 ## Data
 
-All the data records are stored in the file `specs4Diva.csv` and contain 18 species of benthos.       
+The data records stored in the file `specs4Diva.csv` consists of 18 species of benthos that were used for testing purposes.     
+The main data file is `spe.csv`, it contains all sampling events as rows, and the most frequent species (occurrence >200) as columns. The first columns specify sampling event and location. All columns are coded as ‘pa’ (for presence/absence) followed by the AphiaID of the species. In the separate file specieslist.csv you find the names of the species corresponding to their AphiaID. You also find the total number of events where the species has been found.
+
+A species can have value 1 (present), 0 (looked for but absent) and NA (not looked for). The NA values must be disregarded when making maps. They do not contain information about either presence or absence. There are NAs in the file because some datasets only look for a subset of species. 
 
 The data file is structured like this:
 ```bash
@@ -69,7 +72,13 @@ This directory contains the notebooks for the preparation and analysis of the da
 4. write the results in a netCDF file (one per species), in the directory `product/netCDF`
 
 * `plot_results_map.ipynb`: notebook in Python to create the figures using the _ETRS89 Lambert Azimuthal Equal Area_ coordinate reference system of 2001 (`EPGS 3035`).     
-The figures are stored in `product/figures`.
+The figures are stored in `product/figures` and consist of
+1. The interpolated probability map
+2. The relative error field
+3. The interpolated probability masked by the error field
+
+![variableL](product/figures/1-UniformL/)
+![variableL](product/figures/1-UniformL/)
 
 
 ### Products
