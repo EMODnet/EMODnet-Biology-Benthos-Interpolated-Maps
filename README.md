@@ -51,7 +51,7 @@ This directory contains the notebooks for the preparation and analysis of the da
 
 ### Method
 
-For a given species, two __heatmaps__ are computed: one of the presence, the other
+For a given species, two _heatmaps_ are computed: one of the presence, the other
 for the absences. Then the probability (between 0 and 1) is computed using the
 following formula:  
 ```
@@ -67,32 +67,36 @@ If we have only presence data, the 2nd term of the denominator is zero and
 the probability reduces to the presence heatmap.
 The absence data decrease the ratio and hence the probability.
 
-### Jupyter notebooks
-
-* `interp_presence_absence_benthos.ipynb`:
-1. prepare the domain and the bathymetry,
-2. read the coordinates of presence and absence for each species,
-3. compute the probability map and the associated error field and
-4. write the results in a netCDF file (one per species and one global for all
-	the species), in the directory `product/netCDF`
-
-* `plot_results_map.ipynb`: notebook in `Python` to create the figures using the _ETRS89 Lambert Azimuthal Equal Area_ coordinate reference system of 2001 (`EPGS 3035`).     
-The figures are stored in `product/figures` and consist of
-1. The interpolated probability map
-2. The relative error field
-3. The interpolated probability masked by the error field: for some species the
-computed probability displays high and non-realistic values, due to the ratio of very small (but different) values in regions without observations.
-
-![Gridded field](product/figures/1-UniformL/Megaluropus_agilis_density.jpg)
-![Error field](product/figures/1-UniformL/Megaluropus_agilis_error.jpg)
-
 ### Products
 
 Two types of analysis are performed:
 1. Using a uniform correlation length all over the domain (0.1°) (directory `1-UniformL`)
 2. Using a spatially variable correlation length (see figure below), derives from the substrates (directory `2-VariableL`).
 
+For both anaysis, 2 types of products are created (described in the next section):
+1. Figures (jpg format).
+2. NetCDF files.
+
 ![variableL](product/figures/variableL.jpg)
+
+### Jupyter notebooks
+
+* [`interp_presence_absence_benthos`](analysis/interp_presence_absence_benthos.ipynb):
+1. prepare the domain and the bathymetry,
+2. read the coordinates of presence and absence for each species,
+3. compute the probability map and the associated error field and
+4. write the results in a netCDF file (one per species and one global for all
+	the species), in the directory `product/netCDF`
+
+* [`plot_results_map.ipynb`](analysis/plot_results_map.ipynb): notebook in `Python` to create the figures using the _ETRS89 Lambert Azimuthal Equal Area_ coordinate reference system of 2001 (`EPGS 3035`).     
+The figures are stored in `product/figures` and consist of
+1. The interpolated probability map
+2. The relative error field
+3. The interpolated probability masked by the error field: for some species the
+computed probability displays high and non-realistic values, due to the ratio of very small (but different) values in regions without observations.
+
+![Gridded field](product/figures/1-UniformL/Aequipecten_opercularis_density.jpg)
+![Error field](product/figures/1-UniformL/Aequipecten_opercularis_error.jpg)
 
 ### Code
 
