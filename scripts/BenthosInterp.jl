@@ -3,12 +3,15 @@ usecartopy = true
 using GridInterpolations
 using Interpolations
 using Missings
+using NCDatasets
 
 """
-    read_coords_species(datafile, species)
+    read_coords_species(datafile, species, occurtype)
 
 Read the coordinates for presence and abscence events stored in the file
 `datafile` for the selected species.
+`occurtype` = 1 if presences are represented by 1, absence by 0
+	        = 2 if presences are represented by TRUE, absence by FALSE
 
 ## Examples
 ```julia-repl
@@ -25,12 +28,12 @@ function read_coords_species(datafile::String, species::Union{String,SubString{S
     @info("Column index for $(species): $(col_index)");
     occur_species = data[2:end,col_index]
 
-	if occurtype == 1
+	if occurtype == 2
 		occur_pre = findall(occur_species .== "TRUE")
     	occur_abs = findall(occur_species .== "FALSE")
-	elseif occurtype == 2
-		occur_pre = findall(occur_species .== "1")
-    	occur_abs = findall(occur_species .== "0")
+	elseif occurtype == 1
+		occur_pre = findall(occur_species .== 1)
+    	occur_abs = findall(occur_species .== 0)
 	end
 
     lon_presence = lon[occur_pre]
@@ -287,9 +290,10 @@ julia> create_nc_results("Bacteriastrum_interp.nc", lons, lats, field,
 function create_nc_results(filename::String, lons, lats, field,
                            speciesname::String="";
                            valex=-999.9,
-                           varname = "heatmap",
-                           long_name = "Heatmap",
-						   domain = [-180., 180., -90., 90.]
+                           varname::String = "heatmap",
+                           long_name::String = "Heatmap",
+						   domain::Array = [-180., 180., -90., 90.],
+						   aphiaID::Int32 = 0
                            )
     Dataset(filename, "c") do ds
 
@@ -343,6 +347,8 @@ function create_nc_results(filename::String, lons, lats, field,
 		nclat.attrib["valid_max"] = 90.0 ;
 
         # Global attributes
+		ds.attrib["Species_scientific_name"] = speciesname
+		ds.attrib["Species_aphiaID"] = aphiaID
 		ds.attrib["title"] = "$(long_name) based on presence/absence of $(speciesname)"
 		ds.attrib["institution"] = "GHER - University of Liege, Deltares, VLIZ"
 		ds.attrib["source"] = "spatial interpolation of presence/absence data"
@@ -460,7 +466,6 @@ function interp_horiz(londata, latdata, data, longrid, latgrid)
     return lon_interp, lat_interp, field_interpolated, findall(goodlon), findall(goodlat)
 end
 
-
 """
     create_nc_results_merged(filename, lons, lats)
 
@@ -473,10 +478,8 @@ julia> create_nc_results("Bacteriastrum_interp.nc", lons, lats, field,
     "Bacteriastrum")
 ```
 """
-function create_nc_results_merged(filename::String, lons, lats, field,
+function create_nc_results_merged(filename::String, lons, lats,
                            valex=-999.9,
-                           varname = "heatmap",
-                           long_name = "Heatmap",
 						   domain = [-180., 180., -90., 90.]
                            )
     Dataset(filename, "c") do ds
@@ -484,7 +487,7 @@ function create_nc_results_merged(filename::String, lons, lats, field,
         # Dimensions
         ds.dim["lon"] = length(lons)
         ds.dim["lat"] = length(lats)
-        #ds.dim["time"] = Inf # unlimited dimension
+        ds.dim["species"] = Inf # unlimited dimension
 
         # Declare variables
 		nccrs = defVar(ds, "crs", Int64, ())
@@ -492,21 +495,32 @@ function create_nc_results_merged(filename::String, lons, lats, field,
     	nccrs.attrib["semi_major_axis"] = 6371000.0 ;
     	nccrs.attrib["inverse_flattening"] = 0 ;
 
-        ncfield = defVar(ds, varname, Float64, ("lon", "lat"))
+        ncfield = defVar(ds, "probability", Float64, ("lon", "lat", "species"))
         ncfield.attrib["missing_value"] = Float64(valex)
         ncfield.attrib["_FillValue"] = Float64(valex)
 		ncfield.attrib["units"] = "1"
-        ncfield.attrib["long_name"] = long_name
-		ncfield.attrib["coordinates"] = "lat lon"
+        ncfield.attrib["long_name"] = "Probability of occurence"
+		ncfield.attrib["coordinates"] = "species lat lon"
 		ncfield.attrib["grid_mapping"] = "crs" ;
 
-		# No time variable needed here
-        """
-        nctime = defVar(ds,"time", Float32, ("time",))
-        nctime.attrib["missing_value"] = Float32(valex)
-        nctime.attrib["units"] = "seconds since 1981-01-01 00:00:00"
-        nctime.attrib["long_name"] = "time"
-        """
+		ncerror = defVar(ds, "probability_error", Float64, ("lon", "lat", "species"))
+        ncerror.attrib["missing_value"] = Float64(valex)
+        ncerror.attrib["_FillValue"] = Float64(valex)
+		ncerror.attrib["units"] = "1"
+        ncerror.attrib["long_name"] = "Error on probability of occurence"
+		ncerror.attrib["coordinates"] = "species lat lon "
+		ncerror.attrib["grid_mapping"] = "crs" ;
+
+		# Species variable
+		# Note: A variable with no units attribute is assumed to be dimensionless
+		# (http://cfconventions.org/cf-conventions/cf-conventions.html#units)
+        ncspec = defVar(ds, "aphiaID", Int32, ("species",))
+        ncspec.attrib["missing_value"] = Int64(round(valex))
+        ncspec.attrib["long_name"] = "AphiaID identifier"
+
+		ncspecname = defVar(ds, "speciesname", String, ("species",))
+        ncspecname.attrib["missing_value"] = string(valex)
+        ncspecname.attrib["long_name"] = "Scientific name"
 
         nclon = defVar(ds,"lon", Float32, ("lon",))
         # nclon.attrib["missing_value"] = Float32(valex)
@@ -531,7 +545,7 @@ function create_nc_results_merged(filename::String, lons, lats, field,
 		nclat.attrib["valid_max"] = 90.0 ;
 
         # Global attributes
-		ds.attrib["title"] = "$(long_name) based on presence/absence of $(speciesname)"
+		ds.attrib["title"] = "Interpolated occurence maps based on presence/absence data"
 		ds.attrib["institution"] = "GHER - University of Liege, Deltares, VLIZ"
 		ds.attrib["source"] = "spatial interpolation of presence/absence data"
         ds.attrib["project"] = "EMODnet Biology Phase III"
@@ -558,11 +572,82 @@ function create_nc_results_merged(filename::String, lons, lats, field,
 		ds.attrib["Conventions"] = "CF-1.7"
 		ds.attrib["netcdf_version"] = "4"
 
-        # Define variables
-        ncfield[:] = field
-
         nclon[:] = lons
         nclat[:] = lats;
 
     end
 end;
+
+"""
+    read_results(resfile)
+
+Read the results from the netCDF file `resfile`:
+coordinates, interpolated field, error fied and species name
+
+## Examples
+```julia-repl
+julia> lon, lat, field, error, domain, scientificname, aphiaID =
+read_results("Spiophanes_bombyx_density.nc")
+```
+"""
+function read_results(resfile::String)
+    NCDatasets.Dataset(resfile) do nc
+        lon = nc["lon"][:]
+        lat = nc["lat"][:]
+        field = nc["heatmap"][:]
+        error = nc["heatmap_error"][:]
+        scientificname = nc.attrib["Species_scientific_name"]
+        aphiaID = nc.attrib["Species_aphiaID"];
+
+        latmin = nc.attrib["geospatial_lat_min"]
+        latmax = nc.attrib["geospatial_lat_max"]
+        lonmin = nc.attrib["geospatial_lon_min"]
+        lonmax = nc.attrib["geospatial_lon_max"]
+        domain = [lonmin, lonmax, latmin, latmax];
+
+        return lon::Array, lat::Array, field::Array, error::Array, domain::Array,
+        scientificname::String, aphiaID::Int32;
+    end
+end
+
+"""
+    merge_netcdf_file(filelist, mergedfile)
+
+Create a netCDF file `mergedfile` that contains all the interpolated and error
+fields from the files specified in the list `filelist`
+
+## Examples
+```julia-repl
+julia> filelist = ["Nephtys_hombergii_density.nc", "Spiophanes_bombyx_density.nc"]
+julia> merge_netcdf_file(filelist, "benthos_interp_all.nc")
+```
+"""
+function merge_netcdf_file(filelist::Array, mergedfile::String)
+
+    @info("Getting information from first file")
+    lon, lat, field, error, domain, scientificname, aphiaID = read_results(filelist[1]);
+
+    @info("Creating global netCDF")
+    create_nc_results_merged(mergedfile, lon, lat, -9999.9, domain);
+
+    NCDatasets.Dataset(mergedfile, "a") do nc
+        # Loop on the files
+        for (inum, resfile) in enumerate(filelist)
+            @info("$(inum)/$(nfiles)")
+            @info("Reading results from file $(resfile)")
+
+            lon, lat, field, error, domain, scientificname, aphiaID = read_results(resfile);
+
+            @debug(typeof(aphiaID))
+            @info("Writing in global files")
+            nc["aphiaID"][inum] = aphiaID
+            nc["speciesname"][inum] = scientificname
+
+            @info("Writing field in the global netCDF file")
+            nc["probability"][:,:,inum] = field
+
+            @info("Writing error field in the global netCDF file")
+            nc["probability_error"][:,:,inum] = error
+        end
+    end
+end
