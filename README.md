@@ -73,8 +73,8 @@ Two types of analysis are performed:
 1. Using a uniform correlation length all over the domain (0.1°) (directory `1-UniformL`)
 2. Using a spatially variable correlation length (see figure below), derives from the substrates (directory `2-VariableL`).
 
-For both anaysis, 2 types of products are created (described in the next section):
-1. Figures (jpg format).
+For both analysis, 2 types of products are created (described in the next section):
+1. Figures (`jpg` format).
 2. NetCDF files.
 
 ![variableL](product/figures/variableL.jpg)
@@ -102,6 +102,28 @@ computed probability displays high and non-realistic values, due to the ratio of
 
 The code, written in `Julia`, is distributed through GitHub:
 https://github.com/EMODnet/EMODnet-Biology-Benthos-Interpolated-Maps
+
+#### Installation
+
+You need Julia 1.5 (or later) available from https://julialang.org/downloads/.
+The following Julia packages required to run this code can be installed with:
+
+```julia
+using Pkg
+Pkg.add("DIVAnd")
+Pkg.add("DelimitedFiles")
+Pkg.add("Dates")
+Pkg.add("NCDatasets")
+Pkg.add("GridInterpolations")
+Pkg.add("Interpolations")
+Pkg.add("Missings")
+```
+if plots are to be created with Julia, those packages are also required:
+```julia
+Pkg.add("PyCall")
+Pkg.add("PyPlot")
+Pkg.add("Proj4")
+```
 
 ## Citation
 
