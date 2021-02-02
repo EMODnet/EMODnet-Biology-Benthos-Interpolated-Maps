@@ -8,17 +8,50 @@ using NCDatasets
 """
     read_coords_species(datafile, species, occurtype)
 
-Read the coordinates for presence and abscence events stored in the file
-`datafile` for the selected species.
-`occurtype` = 1 if presences are represented by 1, absence by 0
-	        = 2 if presences are represented by TRUE, absence by FALSE
+Read the coordinates for presence and absence events stored in the file
+`datafile` for the selected `species`.
+
+`species` can be a string or an integer corresponding to the aphiaID
+
+`occurtype` parameter
+- = 1 if presences are represented by **1**, absence by **0**
+- = 2 if presences are represented by **TRUE**, absence by **FALSE**
 
 ## Examples
 ```julia-repl
-julia> lon_pre, lat_pre, lon_abs, lat_abs = read_data_phyto("specs4Diva.csv")
+julia> lon_pre, lat_pre, lon_abs, lat_abs = read_coords_species("specs4Diva.csv", "Abludomelita_obtusata", 2)
+
+julia> lon_pre, lat_pre, lon_abs, lat_abs = read_coords_species("spe.csv", 130359, 1)
+
 ```
 """
 function read_coords_species(datafile::String, species::Union{String,SubString{String}}, occurtype=1)
+    data = readdlm(datafile, ',');
+    colnames = data[1,:]
+    dates = data[2:end,2]
+    lon = data[2:end,3]
+    lat = data[2:end,4]
+    col_index = findall(colnames .== species)[1]
+    @info("Column index for $(species): $(col_index)");
+    occur_species = data[2:end,col_index]
+
+	if occurtype == 2
+		occur_pre = findall(occur_species .== "TRUE")
+    	occur_abs = findall(occur_species .== "FALSE")
+	elseif occurtype == 1
+		occur_pre = findall(occur_species .== 1)
+    	occur_abs = findall(occur_species .== 0)
+	end
+
+    lon_presence = lon[occur_pre]
+    lat_presence = lat[occur_pre]
+    lon_absence = lon[occur_abs]
+    lat_absence = lat[occur_abs];
+    return Float64.(lon_presence), Float64.(lat_presence), Float64.(lon_absence), Float64.(lat_absence)
+end
+
+function read_coords_species(datafile::String, speciesID::Int64, occurtype=1)
+	species = "pa" * string(speciesID)
     data = readdlm(datafile, ',');
     colnames = data[1,:]
     dates = data[2:end,2]
@@ -480,7 +513,7 @@ julia> create_nc_results("Bacteriastrum_interp.nc", lons, lats, field,
 """
 function create_nc_results_merged(filename::String, lons, lats,
                            valex=-999.9,
-						   domain = [-180., 180., -90., 90.]
+						   domain::Array{Float64,1} = [-180., 180., -90., 90.]
                            )
     Dataset(filename, "c") do ds
 
@@ -592,10 +625,10 @@ read_results("Spiophanes_bombyx_density.nc")
 """
 function read_results(resfile::String)
     NCDatasets.Dataset(resfile) do nc
-        lon = nc["lon"][:]
-        lat = nc["lat"][:]
-        field = nc["heatmap"][:]
-        error = nc["heatmap_error"][:]
+        lon = coalesce.(nc["lon"][:], NaN)
+        lat = coalesce.(nc["lat"][:], NaN)
+        field = coalesce.(nc["heatmap"][:], NaN)
+        error = coalesce.(nc["heatmap_error"][:], NaN)
         scientificname = nc.attrib["Species_scientific_name"]
         aphiaID = nc.attrib["Species_aphiaID"];
 
@@ -605,8 +638,8 @@ function read_results(resfile::String)
         lonmax = nc.attrib["geospatial_lon_max"]
         domain = [lonmin, lonmax, latmin, latmax];
 
-        return lon::Array, lat::Array, field::Array, error::Array, domain::Array,
-        scientificname::String, aphiaID::Int32;
+        return lon::Array, lat::Array, field::Array, error::Array,
+		domain::Array{Float64,1}, scientificname::String, aphiaID::Int32;
     end
 end
 
@@ -616,13 +649,13 @@ end
 Create a netCDF file `mergedfile` that contains all the interpolated and error
 fields from the files specified in the list `filelist`
 
-## Examples
+## Example
 ```julia-repl
 julia> filelist = ["Nephtys_hombergii_density.nc", "Spiophanes_bombyx_density.nc"]
 julia> merge_netcdf_file(filelist, "benthos_interp_all.nc")
 ```
 """
-function merge_netcdf_file(filelist::Array, mergedfile::String)
+function merge_netcdf_file(filelist::Array{String,1}, mergedfile::String)
 
     @info("Getting information from first file")
     lon, lat, field, error, domain, scientificname, aphiaID = read_results(filelist[1]);
