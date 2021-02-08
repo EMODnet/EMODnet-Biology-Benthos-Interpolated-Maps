@@ -4,6 +4,7 @@ using GridInterpolations
 using Interpolations
 using Missings
 using NCDatasets
+using Dates
 
 """
     read_coords_species(datafile, species, occurtype)
@@ -507,8 +508,7 @@ heatmap `field`.
 
 ## Examples
 ```julia-repl
-julia> create_nc_results("Bacteriastrum_interp.nc", lons, lats, field,
-    "Bacteriastrum")
+julia> create_nc_results("Benthos_combined.nc", lons, lats, -999.)
 ```
 """
 function create_nc_results_merged(filename::String, lons, lats,
