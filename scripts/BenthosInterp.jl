@@ -644,6 +644,22 @@ function read_results(resfile::String)
 end
 
 """
+	get_aphiaID(filename)
+
+Return the aphiaID of the species interpolated in the netCDF file
+```julia-repl
+julia> aphiaID = get_aphiaID("Bathyporeia_density.nc")
+julia> 101742
+```
+"""
+function get_aphiaID(filename::String)::Int32
+    NCDatasets.Dataset(filename) do ds
+        aphiaID = ds.attrib["Species_aphiaID"]
+        return aphiaID
+    end
+end
+
+"""
     merge_netcdf_file(filelist, mergedfile)
 
 Create a netCDF file `mergedfile` that contains all the interpolated and error
