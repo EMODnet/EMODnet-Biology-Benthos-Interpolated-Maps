@@ -134,8 +134,6 @@ Herman, P.M.J., Stolte, W., van der Heijden, L. 2020. Summary  presence/absence 
 
 ### Code and methodology
 
-#### Code
-
 The code, written in `Julia`, is distributed through GitHub:
 https://github.com/EMODnet/EMODnet-Biology-Benthos-Interpolated-Maps
 
