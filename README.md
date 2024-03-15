@@ -145,7 +145,15 @@ for different benthos species in the North Sea. Integrated data products created
 
 The code is free software; you can redistribute it and/or modify it under the terms of the GNU General Public License as published by the Free Software Foundation; either version 2 of the License, or (at your option) any later version.
 
-The product is available to download at: https://www.emodnet-biology.eu/data-catalog?module=dataset&dasid=6640
+The product is available to download at: 
+
+[EMODnet catalogue](https://emodnet.ec.europa.eu/geonetwork/srv/eng/catalog.search#/metadata/1564785471cc93b2c18f192bc73b71597d7fa4dc)
+
+[VLIZ catalogue](https://www.vliz.be/en/imis?module=dataset&dasid=6640)
+
+[EMODnet ERDDAP](https://erddap.emodnet.eu/erddap/files/biology_6640_benthos_NorthSea_e4af_0f0e_6a73/04_2021_6640_diva_benthos_erddap.nc)
+
+[EMODnet viewer](https://emodnet.ec.europa.eu/geoviewer/?layers=12961:1:1&basemap=ebwbl&active=12961&bounds=-8248235.3083528,3721498.002604292,10922700.319775922,12098797.477604292&filters=&projection=EPSG:3857)
 
 ### Authors
 
